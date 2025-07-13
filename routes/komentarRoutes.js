@@ -3,7 +3,10 @@ const express = require('express');
 const router = express.Router();
 const komentarController = require('../controllers/komentarController');
 
-router.get('/laporan/:id', komentarController.getKomentarByLaporan);
-router.post('/', komentarController.createKomentar);
+router.get('/laporan/:id', komentarController.getByLaporan);
+router.post('/', komentarController.create);
+router.delete('/:id', komentarController.delete);
+
+
 
 module.exports = router;

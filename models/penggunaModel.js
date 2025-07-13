@@ -27,10 +27,13 @@ const Pengguna = {
     },
 
     // Update profil pengguna by ID (khusus profil)
-    updateProfilById: (id, data, callback) => {
-    const query = "UPDATE pengguna SET kontak_darurat = ?, alamat = ?, tanggal_lahir = ?, updated_at = NOW() WHERE id = ?";
-    db.query(query, [data.kontak_darurat, data.alamat, data.tanggal_lahir, id], callback);
+    updateProfilById: (id, data, result) => {
+  let sql = 'UPDATE pengguna SET ? WHERE id = ?';
+  db.query(sql, [data, id], (err, res) => {
+    result(err, res);
+  });
 },
+
 
 
     // Hapus pengguna by ID
@@ -48,11 +51,4 @@ const Pengguna = {
     },
 };
 
-
-// Update profil pengguna
-exports.updateProfilById = (id, data, callback) => {
-    const query = "UPDATE pengguna SET kontak_darurat = ?, alamat = ?, tanggal_lahir = ?, updated_at = NOW() WHERE id = ?";
-    console.log('Query:', query, 'Params:', [data.kontak_darurat, data.alamat, data.tanggal_lahir, id]); // Log query dan parameter
-    db.query(query, [data.kontak_darurat, data.alamat, data.tanggal_lahir, id], callback);
-};
 module.exports = Pengguna;

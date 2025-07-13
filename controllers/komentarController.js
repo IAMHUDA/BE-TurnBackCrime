@@ -1,22 +1,97 @@
-// controllers/komentarController.js
-const db = require('../config/database');
+const Komentar = require('../models/komentarModel');
 
-exports.getKomentarByLaporan = (req, res) => {
-  const laporanId = req.params.id;
+exports.getByLaporan = async (req, res) => {
+  try {
+    const idLaporan = parseInt(req.params.id);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-  db.query('SELECT * FROM komentar WHERE id_laporan = ?', [laporanId], (err, results) => {
-    if (err) return res.status(500).json({ message: 'Error mengambil komentar' });
-    res.json(results);
-  });
-};
+    if (isNaN(idLaporan)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID laporan tidak valid'
+      });
+    }
 
-exports.createKomentar = (req, res) => {
-  const { id_pengguna, id_laporan, isi_komentar } = req.body;
-
-  db.query('INSERT INTO komentar (id_pengguna, id_laporan, isi_komentar) VALUES (?, ?, ?)',
-    [id_pengguna, id_laporan, isi_komentar],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: 'Error menambahkan komentar' });
-      res.json({ message: 'Komentar berhasil ditambahkan' });
+    const result = await Komentar.getByLaporan(idLaporan, page, limit);
+    
+    res.json({
+      success: true,
+      data: result.data,
+      meta: result.meta
     });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };
+
+exports.create = async (req, res) => {
+  try {
+    const { id_pengguna, id_laporan, isi_komentar } = req.body;
+    
+    if (!isi_komentar || isi_komentar.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: 'Komentar harus diisi (maks 500 karakter)'
+      });
+    }
+
+    const newKomentar = await Komentar.create({
+      id_pengguna,
+      id_laporan,
+      isi_komentar
+    });
+
+    res.status(201).json({
+      success: true,
+      data: newKomentar
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+exports.delete = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    console.log('ID komentar:', id);
+
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID komentar tidak valid',
+      });
+    }
+
+    const isDeleted = await Komentar.deleteById(id);
+
+    if (!isDeleted) {
+      return res.status(404).json({
+        success: false,
+        message: 'Komentar tidak ditemukan',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Komentar berhasil dihapus',
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+

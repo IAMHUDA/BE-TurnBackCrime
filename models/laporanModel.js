@@ -6,17 +6,41 @@ const Laporan = {
         db.query('INSERT INTO laporan SET ?', [data], callback);
     },
 
-    // Ambil semua laporan
-    findAll: (callback) => {
-    const sql = `
-      SELECT l.*, 
-        (SELECT COUNT(*) FROM komentar k WHERE k.id_laporan = l.id) AS total_komentar
-      FROM laporan l
-      ORDER BY l.created_at DESC
-    `;
-    db.query(sql, callback);
-},
+    // Ambil semua laporan dengan filter dan pencarian
+    // Perubahan utama di sini: tambahkan `filters` sebagai argumen pertama
+    findAll: (filters, callback) => { // <--- Perhatikan perubahan di sini!
+        let sql = `
+            SELECT l.*, 
+            (SELECT COUNT(*) FROM komentar k WHERE k.id_laporan = l.id) AS total_komentar
+            FROM laporan l
+        `;
+        const params = [];
+        const conditions = [];
 
+        // Logika untuk menambahkan kondisi filter
+        if (filters.q) {
+            // Asumsi kolom judul dan deskripsi ada di tabel 'laporan'
+            conditions.push('(l.judul LIKE ? OR l.deskripsi LIKE ?)');
+            params.push(`%${filters.q}%`);
+            params.push(`%${filters.q}%`);
+        }
+
+        if (filters.status) {
+            conditions.push('l.status = ?');
+            params.push(filters.status);
+        }
+
+        if (conditions.length > 0) {
+            sql += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        sql += ' ORDER BY l.created_at DESC'; // Selalu tambahkan order by di akhir
+
+        console.log('Executing DB query (laporanModel):', sql, params); // DEBUGGING PENTING
+
+        // Eksekusi query dengan parameter yang sudah dibangun
+        db.query(sql, params, callback); // <--- Pastikan db.query menerima params di sini
+    },
 
     // Ambil laporan by ID
     findById: (id, callback) => {
